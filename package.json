@@ -1,6 +1,6 @@
 {
-  "name": "goit-react-hw-03-image-finder",
-  "homepage": "https://jakubjarosz.github.io/goit-react-hw-03-image-finder/",
+  "name": "goit-react-hw-04-hooks-images",
+  "homepage": "https://jakubjarosz.github.io/goit-react-hw-04-hooks-images/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

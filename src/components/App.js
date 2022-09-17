@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, {useState, useEffect, useRef  } from "react";
 import Searchbar from "./Searchbar/Searchbar";
 import ImageGallery from "./ImageGallery/ImageGallery";
 import ImageGalleryItem from "./ImageGalleryItem/ImageGalleryItem"
@@ -8,140 +8,124 @@ import Button from "./Button/Button";
 import api from "../Api/Api";
 import { Audio } from "react-loader-spinner"
 
-class App extends Component {
- 
- constructor(props) {
-    super(props);
-   this.testRef = React.createRef();
-    this.escFunction = this.escFunction.bind(this);
-  }
-   state = {
-     picGallery: [],
-     inputValue: "",
-     error: null,
-     isLoading: false,
-     page: 1,
-     picPerPage: 12,
-     showModal: false,
-     bigPic: '',
-     isLoading: false,
-   };
-  
-   escFunction(event){
-    if (event.key === "Escape") {
-      this.handleOverlayClose();
+
+
+const App = () => {
+    const [picGallery, setPicGallery] = useState([]);
+    const [showModal, setShowModal] = useState(false);
+    const [bigPic, setBigPic] = useState('');
+    const [inputValue, setInputValue] = useState('');
+    const [page, setPage] = useState(1);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const divRef = useRef();
+    
+
+    const handlePicClick = (ev) => {
+        setShowModal(true);
+        setBigPic(picGallery.filter(el => el.id == ev.target.id).map(url => url.largeImageURL));
     }
-   }
-  
-  handlePicClick = (ev) => {
-    this.setState({ showModal: true, bigPic: this.state.picGallery.filter(el => el.id == ev.target.id).map(url => url.largeImageURL)})
-  }
-  
-  handleOverlayClose = () => {
-    this.setState({showModal: false})
-  }
 
- 
-
-  handleChange = evt => {
-    this.setState({inputValue: evt.target.value})
-   }
-  
-   handleSubmit = evt => {
-     evt.preventDefault();
-     this.setState({ page: 1 }, () => {
-       this.fetchApi();
-     })
-  }
-  
-
-  async fetchApi() {
-    this.setState({isLoading: true})
-    try {
-      const gallery = await api.fetchPictures(this.state.inputValue, this.state.page, this.state.picPerPage);
-      
-      this.setState({ ...this.state, picGallery: [...this.state.picGallery, ...gallery.data.hits]});
-      console.log(this.state)
-    } catch (error) {
-      this.setState({ error });
-    } finally {
-      this.setState({ isLoading: false });
+    const handleOverlayClose = () => {
+        setShowModal(false);
     }
-  }
 
-  handleMoreClick = (e) => {
-    this.setState({ page: this.state.page + 1 }, () => {
-      this.fetchApi();
-      e.preventDefault();
-      //this.scrollToElement(e);
-      // this.inputField.current.scrollIntoView();
-     
-    });
-  }
- componentDidMount(){
-    document.addEventListener("keydown", this.escFunction, false);
-  }
- componentWillUnmount(){
-    document.removeEventListener("keydown", this.escFunction, false);
-  }
-  componentDidUpdate() {
-    this.scrollToBottom();
-  }
-   
-  scrollToBottom = () => {
-    this.testRef.current.scrollIntoView({block: 'center'});
-  }
+    const handleChange = (evt) => {
+        setInputValue(evt.target.value)
+    }
 
-  
+    const handleSubmit = async (evt) => {
+        evt.preventDefault();
+        setPage(1);
+        await fetchApi();
+    }
 
-  render() {
-    const {picGallery, inputValue, showModal, bigPic, isLoading} = this.state
-    return (
-    <div className="App">
-        <Searchbar handleSubmit={this.handleSubmit}
-          handleChange={this.handleChange}
-          inputValue={inputValue}
-/>
-        <ImageGallery>
-          <ImageGalleryItem
-            picItems={picGallery}
-            clickHandler={this.handlePicClick}
-            
-          />
-        </ImageGallery>
+    const fetchApi = async () => {
+        setIsLoading(true);
+        try {
+            const gallery = await api.fetchPictures(inputValue, page);
+            setPicGallery(prevState => [...prevState, ...gallery.data.hits])
+            console.log(picGallery)
+        } catch (error) {
+           setError(error)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+    
+    const handleMoreClick = async (e) => {
+        setPage(page + 1)
+           await fetchApi();
+            e.preventDefault();
         
-        <Button
-          handleClick={this.handleMoreClick}
-            picGallery={picGallery} 
-          />
-          
-        <Loader>
+    }
+
+    const scrollToBottom = () => {
+        divRef.current.scrollIntoView({ block: 'center' });
+    }
+
+    useEffect(() => {
+        const handleEsc = (event) => {
+            if (event.keyCode === 27) {
+                handleOverlayClose();
+            }
+        };
+        window.addEventListener('keydown', handleEsc);
+
+        return () => {
+            window.removeEventListener('keydown', handleEsc);
+        };
+    }, []);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [scrollToBottom]);
+
+   
+
+    return (
+        <div className="App">
+            <Searchbar
+                handleSubmit={handleSubmit}
+                handleChange={handleChange}
+                inputValue={inputValue}
+            />
+            <ImageGallery>
+                <ImageGalleryItem
+                    picItems={picGallery}
+                    clickHandler={handlePicClick}
+
+                />
+            </ImageGallery>
+
+            <Button
+                handleClick={handleMoreClick}
+                picGallery={picGallery}
+            />
+
+            <Loader>
                 {isLoading === true && (
-                 <Audio
-  height="80"
-  width="80"
-  radius="9"
-  color="green"
-  ariaLabel="loading"
-  wrapperStyle
-  wrapperClass
-/>
-     )}
-     </Loader>
-        {showModal === true && (
-          <Modal
-            bigPic={bigPic}
-            handleOverlay={this.handleOverlayClose}
-          />
-        )}
-         <div className="bottom" ref={this.testRef}></div>
-    </div>
-  );
-  }
-}
-
-export default App;
+                    <Audio
+                        height="80"
+                        width="80"
+                        radius="9"
+                        color="green"
+                        ariaLabel="loading"
+                        wrapperStyle
+                        wrapperClass
+                    />
+                )}
+            </Loader>
+            {showModal === true && (
+                <Modal
+                    bigPic={bigPic}
+                    handleOverlay={handleOverlayClose}
+                />
+            )}
+            <div className="bottom" ref={divRef}></div>
+        </div>
+    );
+};
 
 
-
- 
+export default App

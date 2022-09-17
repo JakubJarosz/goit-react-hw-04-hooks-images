@@ -30,8 +30,8 @@ export class Searchbar extends Component {
 
 export default Searchbar
 
-Searchbar.propTypes = {
-    handleSubmit: PropTypes.func.isRequired,
-    handleChange: PropTypes.func.isRequired,
-    inputValue: PropTypes.string.isRequired
-};
+// Searchbar.propTypes = {
+//     handleSubmit: PropTypes.func.isRequired,
+//     handleChange: PropTypes.func.isRequired,
+//     inputValue: PropTypes.string.isRequired
+// };
